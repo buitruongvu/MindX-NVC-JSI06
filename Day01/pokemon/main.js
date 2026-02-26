@@ -48,13 +48,23 @@ const renderPokemonCard = (data) => {
 // 3. Hàm lấy danh sách từ API
 const fetchPokemonList = async () => {
   try {
-    const res = await axios.get("https://pokeapi.co/api/v2/pokemon?limit=1000");
+    // Bước 1: Lấy danh sách 1000 cái tên và URL
+    const res = await axios.get("https://pokeapi.co/api/v2/pokemon?limit=2000");
     const pokemonArray = res.data.results;
 
-    for (const pokemon of pokemonArray) {
-      const detailRes = await axios.get(pokemon.url);
-      renderPokemonCard(detailRes.data);
-    }
+    // Bước 2: Tạo một danh sách các "lời hứa" (Promises)
+    // Thay vì đợi từng con, chúng ta tạo ra một mảng các yêu cầu tải chi tiết
+    const pokemonPromises = pokemonArray.map((pokemon) =>
+      axios.get(pokemon.url),
+    );
+
+    // Bước 3: Chạy tất cả các yêu cầu cùng lúc và đợi cho đến khi tất cả xong
+    const responses = await Promise.all(pokemonPromises);
+
+    // Bước 4: Sau khi tất cả đã xong, mới bắt đầu vẽ lên màn hình
+    responses.forEach((res) => {
+      renderPokemonCard(res.data);
+    });
   } catch (error) {
     console.error("Lỗi khi tải danh sách:", error);
   }
